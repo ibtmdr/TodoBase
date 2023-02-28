@@ -1,8 +1,7 @@
 
 
 package fr.todo.operation;
-import fr.todo.module.Todo;
-import fr.todo.module.Urgence;
+import fr.todo.module.*;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -14,6 +13,7 @@ public class CRUDTodo {
 		try{
 			// Class.forName("com.mysql.cj.jdbc.Driver");
 			connection = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306/base", "root", "Ibtissam@12345");
+		    connection.setAutoCommit(false);
 		}catch (SQLException e){
 			System.out.println(e.getMessage());
 		}
@@ -22,6 +22,7 @@ public class CRUDTodo {
 
 	public static void disconnection(){
 		try {
+
 			connection.close();
 		}catch (SQLException e){
 			e.getMessage();
@@ -38,10 +39,16 @@ public class CRUDTodo {
 			ps.setInt(1, id);
 			// supprission de la base
 			ps.executeUpdate();
+			connection.commit();
 
 
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
+			try {
+				connection.rollback();
+			} catch (SQLException ex) {
+				throw new RuntimeException(ex);
+			}
 		}
 
 	}
@@ -55,7 +62,7 @@ public class CRUDTodo {
 		try {
 
 
-			PreparedStatement ps = connection.prepareStatement("INSERT INTO todo (titre,description,urgence) values(?, ?, ?)");
+			PreparedStatement ps = connection.prepareStatement("INSERT INTO todo (titre,description,urgence) values(?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
 			// pour ajouter un valur en enter de requete (premier ?)
 			ps.setString(1, todo.getTitre());
 			// pour ajouter un valur en enter de requete (deuxieme ?)
@@ -69,10 +76,15 @@ public class CRUDTodo {
 			if (rs.next()) {
 				i = rs.getInt(1);
 			}
-
+			connection.commit();
 
 		} catch (SQLException e) {
 			System.out.println(e.getMessage());
+			try {
+				connection.rollback();
+			} catch (SQLException ex) {
+				throw new RuntimeException(ex);
+			}
 		}
         return i ;
 	}
@@ -132,7 +144,7 @@ public class CRUDTodo {
 	}
 
 
-	public static void updateTodo(Todo todo) {
+	public static void updateTodo(Todo todo)  {
 					
 					try {
 			
@@ -147,9 +159,14 @@ public class CRUDTodo {
 						// pour ajouter un valur en enter de requete (deuxieme ?)
 						ps.setInt(4, todo.getId());
                         ps.executeUpdate();
-                        
+						connection.commit();
 					} catch (SQLException e) {
 						System.out.println(e.getMessage());
+						try {
+							connection.rollback();
+						} catch (SQLException ex) {
+							throw new RuntimeException(ex);
+						}
 					}
 
 				}
